@@ -81,6 +81,21 @@ module Orderbook
       refresh_snapshot
     end
 
+    def check_sequence(sequence, expected_sequence)
+      if sequence != expected_sequence
+        if @missing.keys.include? (expected_sequence)
+          @missing.fetch(expected_sequence).kill
+          @missing.delete(expected_sequence)
+        else
+          @missing[expected_sequence] = Thread.new do
+            sleep LOST_TIMEOUT
+            timeout expected_sequence
+          end
+        end
+        @missing < expected_sequence
+      end
+    end
+
     def process_queue
       @thread && @thread.kill
       @thread = Thread.new do
@@ -88,25 +103,13 @@ module Orderbook
         loop do
           msg = @queue.shift
           sequence = msg.fetch('sequence').to_i
-          if sequence > @sequence
-            unless @last_sequence == 'start'
-              expected_sequence = @last_sequence + 1
-              if sequence != expected_sequence
-                if @missing.keys.include? (expected_sequence)
-                  @missing.fetch(expected_sequence).kill
-                  @missing.delete(expected_sequence)
-                else
-                  @missing[expected_sequence] = Thread.new do
-                    sleep LOST_TIMEOUT
-                    timeout expected_sequence
-                  end
-                end
-                @missing < expected_sequence
-              end
-            end
-            apply(msg)
-            @callback && @callback.call(msg)
+          next if sequence <= @sequence
+          unless @last_sequence == 'start'
+            expected_sequence = @last_sequence + 1
+            check_sequence(sequence, expected_sequence)
           end
+          apply(msg)
+          @callback && @callback.call(msg)
           @last_sequence = sequence
         end
       end
