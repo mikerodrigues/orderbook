@@ -9,11 +9,11 @@ module Orderbook
     end
 
     def bid_volume
-      @bids.map {|x| x.fetch(1).to_f}.inject(:+)}
+      @bids.map {|x| x.fetch(1).to_f}.inject(:+)
     end
 
     def ask_volume
-      @asks.map {|x| x.fetch(1).to_f}.inject(:+)}
+      @asks.map {|x| x.fetch(1).to_f}.inject(:+)
     end
 
     def average_bid
@@ -33,11 +33,11 @@ module Orderbook
     end
 
     def best_bid
-      @bids.sort_by {|x| x.fetch(0).to_f}.last[0,2]}
+      @bids.sort_by {|x| x.fetch(0).to_f}.last[0,2]
     end
 
     def best_ask
-      @asks.sort_by {|x| x.fetch(0).to_f}.first[0,2]}
+      @asks.sort_by {|x| x.fetch(0).to_f}.first[0,2]
     end
 
     def spread

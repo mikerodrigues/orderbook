@@ -30,7 +30,7 @@ module Orderbook
     #
     attr_reader :missing
 
-    # CoinbaseExchange::Feed object
+    # CBX::Feed object
     #
     attr_reader :feed
 
@@ -65,12 +65,12 @@ module Orderbook
       on_msg = lambda {|msg| @queue << msg}
       on_close = lambda {|close| puts close}
       on_err = lambda {|err| puts err}
-      @feed = ::CoinbaseExchange::Feed.new(on_msg, on_close, on_err)
+      @feed = ::CBX::Feed.new(on_msg, on_close, on_err)
     end
 
     def snapshot
-      @cb || @cb = ::CoinbaseExchange.new
-      @snapshot = @cb.orderbook(3, 'BTC-USD')
+      @cb || @cb = ::CBX.new
+      @snapshot = @cb.book({level: 3}, 'BTC-USD')
       @sequence = @snapshot.fetch('sequence').to_i
       @bids = @snapshot.fetch('bids')
       @asks = @snapshot.fetch('asks')
