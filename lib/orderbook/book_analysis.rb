@@ -1,4 +1,4 @@
-module Orderbook
+class Orderbook
   module BookAnalysis
     def bid_count
       @bids.count
@@ -9,16 +9,16 @@ module Orderbook
     end
 
     def bid_volume
-      @bids.map {|x| x.fetch(1).to_f}.inject(:+)
+      @bids.map {|x| BigDecimal.new(x.fetch(1))}.inject(:+)
     end
 
     def ask_volume
-      @asks.map {|x| x.fetch(1).to_f}.inject(:+)
+      @asks.map {|x| BigDecimal.new(x.fetch(1))}.inject(:+)
     end
 
     def average_bid
       array = @bids.map do |price, amount, id|
-        price.to_f
+        BigDecimal.new price
       end
       avg_bid = array.inject(:+) / array.count
       avg_bid.to_s
@@ -26,22 +26,32 @@ module Orderbook
 
     def average_ask
       array = @asks.map do |price, amount, id|
-        price.to_f
+        BigDecimal.new price
       end
       avg_ask = array.inject(:+) / array.count
       avg_ask.to_s
     end
 
     def best_bid
-      @bids.sort_by {|x| x.fetch(0).to_f}.last[0,2]
+      @bids.sort_by {|x| BigDecimal.new(x.fetch(0))}.last[0,2]
     end
 
     def best_ask
-      @asks.sort_by {|x| x.fetch(0).to_f}.first[0,2]
+      @asks.sort_by {|x| BigDecimal.new(x.fetch(0))}.first[0,2]
     end
 
     def spread
-      best_sell - best_ask
+      best_bid - best_ask
+    end
+
+    def summarize
+      print "# of asks: #{ask_count}\n# of bids: #{bid_count}\nAsk volume: #{ask_volume.to_s('F')}\nBid volume: #{bid_volume.to_s('F')}\n"
+      $stdout.flush
+#      puts "Avg. ask: #{average_ask}"
+#      puts "Avg. bid: #{average_bid}"
+#      puts "Best ask: #{best_bid}"
+#      puts "Best bid: #{best_ask}"
+#      puts "Spread: #{spread}"
     end
   end
 end
