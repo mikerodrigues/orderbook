@@ -21,7 +21,7 @@ class Orderbook
         BigDecimal.new price
       end
       avg_bid = array.inject(:+) / array.count
-      avg_bid.to_s
+      avg_bid
     end
 
     def average_ask
@@ -29,7 +29,7 @@ class Orderbook
         BigDecimal.new price
       end
       avg_ask = array.inject(:+) / array.count
-      avg_ask.to_s
+      avg_ask
     end
 
     def best_bid

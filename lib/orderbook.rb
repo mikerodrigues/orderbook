@@ -1,7 +1,7 @@
 require 'coinbase/exchange'
 require 'orderbook/book_methods'
 require 'orderbook/book_analysis'
-require 'orderbook/real_time_orderbook'
+require 'orderbook/real_time_book'
 require 'orderbook/version'
 
 class Orderbook
