@@ -1,7 +1,7 @@
 require 'coinbase/exchange'
-require 'orderbook/real_time_book'
 require 'orderbook/book_methods'
 require 'orderbook/book_analysis'
+require 'orderbook/real_time_orderbook'
 require 'orderbook/version'
 
 class Orderbook
@@ -20,43 +20,54 @@ class Orderbook
   #
   attr_reader :sequence
 
-  # CBX::Feed object
+  # Coinbase::Exchange::Websocket object
   #
-  attr_reader :feed
+  attr_reader :websocket
 
-  def initialize
-    @sequence = 0
-    @bids = []
-    @asks = []
-    @cb = Coinbase::Exchange::AsyncClient.new
-    @feed = Coinbase::Exchange::Websocket.new(keepalive: true)
+  # Coinbase::Exchange::AsyncClient
+  #
+  attr_reader :client
 
-    @feed.message do |message|
-      apply(message)
-      summarize
-    end
+  # Thread running the EM loop
+  #
+  attr_reader :thread
 
-    EM.run do
-      @cb.orderbook(level: 3) do |resp|
-        @bids = resp['bids']
-        @asks = resp['asks']
-        @sequence = resp['sequence']
+  # Last time a pong was received after a ping
+  #
+  attr_reader :last_pong
+
+  def initialize(&block)
+    @thread =   Thread.new do
+      @bids = [[ "0.0", "0.0"]]
+      @asks = [[ "0.0", "0.0"]]
+      @sequence = 0
+      @websocket = Coinbase::Exchange::Websocket.new(keepalive: true)
+      @client = Coinbase::Exchange::AsyncClient.new
+
+      @websocket.message do |message|
+        apply(message)
+        if block_given?
+          block.call(message)
+        end
       end
 
-      @feed.start!
-      EM.add_periodic_timer(15) {
-        @feed.ping do
-          p "websocket is alive"
+      EM.run do
+        @client.orderbook(level: 3) do |resp|
+          @bids = resp['bids']
+          @asks = resp['asks']
+          @sequence = resp['sequence']
         end
-      }
-      EM.error_handler { |e|
-        print "Websocket Error: #{e.message} - #{e.backtrace.join("\n")}"
-      }
 
-      @cb.orderbook(level: 3) do |resp|
-        @bids = resp['bids']
-        @asks = resp['asks']
-        @sequence = resp['sequence']
+        @websocket.start!
+        EM.add_periodic_timer(15) {
+          @websocket.ping do
+            @last_pong = Time.now
+          end
+        }
+        EM.error_handler { |e|
+          print "Websocket Error: #{e.message} - #{e.backtrace.join("\n")}"
+        }
+
       end
     end
   end

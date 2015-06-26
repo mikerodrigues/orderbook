@@ -33,15 +33,15 @@ class Orderbook
     end
 
     def best_bid
-      @bids.sort_by {|x| BigDecimal.new(x.fetch(0))}.last[0,2]
+      BigDecimal.new @bids.sort_by {|x| BigDecimal.new(x.fetch(0))}.last.first
     end
 
     def best_ask
-      @asks.sort_by {|x| BigDecimal.new(x.fetch(0))}.first[0,2]
+      BigDecimal.new @asks.sort_by {|x| BigDecimal.new(x.fetch(0))}.first.first
     end
 
     def spread
-      best_bid - best_ask
+      best_ask - best_bid
     end
 
     def summarize
