@@ -29,14 +29,14 @@ class Orderbook
           if ask.include? msg.fetch("maker_order_id")
             old_size = BigDecimal.new(ask.fetch(1))
             new_size = old_size - match_size
-            ask[1] = new_size.to_s
+            ask[1] = new_size.to_s('F')
           end
         end
         @bids.map do |bid|
           if bid.include? msg.fetch("taker_order_id")
             old_size = BigDecimal.net(bid.fetch(1))
             new_size = old_size - match_size
-            bid[1] = new_size.to_s
+            bid[1] = new_size.to_s('F')
           end
         end
       when "buy"
@@ -44,14 +44,14 @@ class Orderbook
           if bid.include? msg.fetch("maker_order_id")
             old_size = BigDecimal.new(bid.fetch(1))
             new_size = old_size - match_size
-            bid[1] = new_size.to_s
+            bid[1] = new_size.to_s('F')
           end
         end
         @asks.map do |ask|
           if ask.include? msg.fetch("taker_order_id")
             old_size = BigDecimal.new(ask.fetch(1))
             new_size = old_size - match_size
-            ask[1] = new_size.to_s
+            ask[1] = new_size.to_s('F')
           end
         end
       end

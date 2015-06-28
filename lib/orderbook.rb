@@ -36,19 +36,25 @@ class Orderbook
   #
   attr_reader :last_pong
 
+  # Callback to pass each received message to
+  #
+  attr_reader :callback
+
   def initialize(&block)
     @thread =   Thread.new do
-      @bids = [[ "0.0", "0.0"]]
-      @asks = [[ "0.0", "0.0"]]
+      @bids = [[ nil, nil]]
+      @asks = [[ nil, nil]]
       @sequence = 0
       @websocket = Coinbase::Exchange::Websocket.new(keepalive: true)
       @client = Coinbase::Exchange::AsyncClient.new
 
+      if block_given?
+        @callback = block
+      end
+
       @websocket.message do |message|
         apply(message)
-        if block_given?
-          block.call(message)
-        end
+        @callback && @callback.call(message)
       end
 
       EM.run do
@@ -71,5 +77,8 @@ class Orderbook
       end
     end
   end
-end
 
+  def set_callback(&block)
+    @callback = block
+  end
+end
