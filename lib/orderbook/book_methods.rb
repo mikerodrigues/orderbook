@@ -1,8 +1,17 @@
-module Orderbook
+require 'bigdecimal'
+
+class Orderbook
+  # This class provides methods to apply updates to the state of the orderbook
+  # as they come in as individual messages.
+  #
   module BookMethods
 
+    # Applies a message to an Orderbook object by making relevant changes to
+    # @bids, @asks, and @last_sequence.
+    #
     def apply(msg)
-      unless msg.fetch('sequence') <= @sequence
+      unless msg.fetch('sequence') <= @first_sequence
+        @last_sequence = msg.fetch('sequence')
         __send__(msg.fetch('type'), msg)
       end
     end
@@ -20,36 +29,36 @@ module Orderbook
     end
 
     def match(msg)
-      match_size = msg.fetch("size").to_f
+      match_size = BigDecimal.new(msg.fetch("size"))
       case msg.fetch("side")
       when "sell"
         @asks.map do |ask|
           if ask.include? msg.fetch("maker_order_id")
-            old_size = ask.fetch(1).to_f
+            old_size = BigDecimal.new(ask.fetch(1))
             new_size = old_size - match_size
-            ask[1] = new_size.to_s
+            ask[1] = new_size.to_s('F')
           end
         end
         @bids.map do |bid|
           if bid.include? msg.fetch("taker_order_id")
-            old_size = bid.fetch(1).to_f
+            old_size = BigDecimal.net(bid.fetch(1))
             new_size = old_size - match_size
-            bid[1] = new_size.to_s
+            bid[1] = new_size.to_s('F')
           end
         end
       when "buy"
         @bids.map do |bid|
           if bid.include? msg.fetch("maker_order_id")
-            old_size = bid.fetch(1).to_f
+            old_size = BigDecimal.new(bid.fetch(1))
             new_size = old_size - match_size
-            bid[1] = new_size.to_s
+            bid[1] = new_size.to_s('F')
           end
         end
         @asks.map do |ask|
           if ask.include? msg.fetch("taker_order_id")
-            old_size = ask.fetch(1).to_f
+            old_size = BigDecimal.new(ask.fetch(1))
             new_size = old_size - match_size
-            ask[1] = new_size.to_s
+            ask[1] = new_size.to_s('F')
           end
         end
       end
@@ -82,6 +91,7 @@ module Orderbook
     end
 
     def received(msg)
+      # The book doesn't change for this message type.
     end
 
   end

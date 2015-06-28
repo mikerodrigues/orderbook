@@ -1,3 +1,3 @@
-module Orderbook
-  VERSION = "0.1.0"
+class Orderbook
+  VERSION = "1.0.0"
 end
