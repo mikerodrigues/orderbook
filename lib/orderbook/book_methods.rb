@@ -1,10 +1,17 @@
 require 'bigdecimal'
 
 class Orderbook
+  # This class provides methods to apply updates to the state of the orderbook
+  # as they come in as individual messages.
+  #
   module BookMethods
 
+    # Applies a message to an Orderbook object by making relevant changes to
+    # @bids, @asks, and @last_sequence.
+    #
     def apply(msg)
-      unless msg.fetch('sequence') <= @sequence
+      unless msg.fetch('sequence') <= @first_sequence
+        @last_sequence = msg.fetch('sequence')
         __send__(msg.fetch('type'), msg)
       end
     end
@@ -84,6 +91,7 @@ class Orderbook
     end
 
     def received(msg)
+      # The book doesn't change for this message type.
     end
 
   end

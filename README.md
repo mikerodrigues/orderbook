@@ -36,6 +36,16 @@ require 'orderbook'
 ob = Orderbook.new
 ```
 
+* Create an Orderbook object but don't fetch an orderbook or start live
+  updating.
+```ruby
+ob = Orderbook.new(false)
+
+# When you want it to go live:
+
+ob.live!
+```
+
 * Create a live Orderbook with a callback to fire on each message:
 ```ruby
 ob = Orderbook.new do |message|
@@ -45,7 +55,7 @@ end
 
 * Create or reset the callback:
 ```ruby
-ob.set_callback do |message|
+ob.callback = lambda do |message|
   puts message.fetch 'callback'
 ```
 
@@ -54,16 +64,31 @@ ob.set_callback do |message|
 rtb = Orderbook::RealTimeBook.new
 ```
 
-* List current bids
+* List current bids:
 ```ruby
-ob.bids # Returns an array of bids.
+ob.bids
 ```
 
-* List current asks
+* List current asks:
 ```ruby
-ob.asks # Returns an array of asks.
+ob.asks
 ```
 
+* Show sequence number for initial level 3 snapshot:
+```ruby
+ob.first_sequence
+```
+
+* Show sequence number for the last message received
+```ruby
+ob.last_sequence
+```
+
+* Show the last Time a pong was received after a ping (ensures the connection is
+  still alive):
+```ruby
+ob.last_pong
+```
 
 ## Contributing
 
