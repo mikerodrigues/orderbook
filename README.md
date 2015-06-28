@@ -36,14 +36,14 @@ require 'orderbook'
 ob = Orderbook.new
 ```
 
-*Create a live Orderbook with a callback to fire on each message:
+* Create a live Orderbook with a callback to fire on each message:
 ```ruby
 ob = Orderbook.new do |message|
   puts message.fetch 'type'
 end
 ```
 
-* The old classname is still supported and is equivalent to an Orderbook:
+* The old class name is still supported and is equivalent to an Orderbook:
 ```ruby
 rtb = Orderbook::RealTimeBook.new
 ```
