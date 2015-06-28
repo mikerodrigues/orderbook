@@ -57,6 +57,7 @@ end
 ```ruby
 ob.callback = lambda do |message|
   puts message.fetch 'callback'
+end
 ```
 
 * The old class name is still supported and is equivalent to an Orderbook:
