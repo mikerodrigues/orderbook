@@ -14,7 +14,7 @@ end
 task :install do
   begin
     puts 'installing gem...'
-    `gem install orderbook-#{Orderbook::VERSION}.gem`
+    `gem install --local orderbook`
   rescue
     puts 'install failed.'
   end
