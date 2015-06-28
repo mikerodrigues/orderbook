@@ -43,6 +43,12 @@ ob = Orderbook.new do |message|
 end
 ```
 
+* Create or reset the callback:
+```ruby
+ob.set_callback do |message|
+  puts message.fetch 'callback'
+```
+
 * The old class name is still supported and is equivalent to an Orderbook:
 ```ruby
 rtb = Orderbook::RealTimeBook.new
