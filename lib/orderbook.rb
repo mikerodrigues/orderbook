@@ -113,7 +113,6 @@ class Orderbook
   def handle_errors
     EM.error_handler do |e|
       print "Websocket Error: #{e.message} - #{e.backtrace.join("\n")}"
-      @websocket.stop!
     end
   end
 
