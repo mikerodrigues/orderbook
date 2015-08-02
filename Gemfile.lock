@@ -1,0 +1,49 @@
+GIT
+  remote: https://github.com/mikerodrigues/coinbase-exchange-ruby.git
+  revision: 051b256d2d0e414d7aec5bdb9a69ad33bfcf7e20
+  branch: orderbook
+  specs:
+    coinbase-exchange (0.1.2)
+      bigdecimal
+      em-http-request
+      faye-websocket
+
+PATH
+  remote: .
+  specs:
+    orderbook (2.0.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    addressable (2.3.8)
+    bigdecimal (1.2.7)
+    cookiejar (0.3.2)
+    em-http-request (1.1.2)
+      addressable (>= 2.3.4)
+      cookiejar
+      em-socksify (>= 0.3)
+      eventmachine (>= 1.0.3)
+      http_parser.rb (>= 0.6.0)
+    em-socksify (0.3.0)
+      eventmachine (>= 1.0.0.beta.4)
+    eventmachine (1.0.7)
+    faye-websocket (0.10.0)
+      eventmachine (>= 0.12.0)
+      websocket-driver (>= 0.5.1)
+    http_parser.rb (0.6.0)
+    json (1.8.3)
+    rake (10.4.2)
+    websocket-driver (0.6.2)
+      websocket-extensions (>= 0.1.0)
+    websocket-extensions (0.1.2)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  bundler (~> 1.7)
+  coinbase-exchange!
+  json
+  orderbook!
+  rake (~> 10.0)
