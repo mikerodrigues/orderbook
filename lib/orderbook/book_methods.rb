@@ -1,10 +1,10 @@
-require 'bigdecimal'
-
+require 'bigdecimal' 
 class Orderbook
   # This class provides methods to apply updates to the state of the orderbook
   # as they come in as individual messages.
   #
   module BookMethods
+    BIGDECIMAL_KEYS = ['size', 'old_size', 'new_size', 'remaining_size', 'price', 'funds', 'old_funds', 'new_funds']
 
     # Applies a message to an Orderbook object by making relevant changes to
     # @bids, @asks, and @last_sequence.
@@ -12,6 +12,11 @@ class Orderbook
     def apply(msg)
       unless msg.fetch('sequence') <= @first_sequence
         @last_sequence = msg.fetch('sequence')
+        BIGDECIMAL_KEYS.each do |key|
+          if msg.fetch(key, false)
+            msg[key] = BigDecimal.new(msg.fetch(key))
+          end
+        end
         __send__(msg.fetch('type'), msg)
       end
     end
@@ -19,72 +24,63 @@ class Orderbook
     private
 
     def open(msg)
-      order = [ msg.fetch("price"), msg.fetch("remaining_size"), msg.fetch("order_id") ]
-      case msg.fetch("side")
-      when "buy"
+      order = { price: msg.fetch('price'), size: msg.fetch('remaining_size'), order_id: msg.fetch('order_id') }
+      case msg.fetch('side')
+      when 'buy'
         @bids << order
-      when "sell"
+      when 'sell'
         @asks << order
       end
     end
 
     def match(msg)
-      match_size = BigDecimal.new(msg.fetch("size"))
-      case msg.fetch("side")
-      when "sell"
+      case msg.fetch('side')
+      when 'sell'
         @asks.map do |ask|
-          if ask.include? msg.fetch("maker_order_id")
-            old_size = BigDecimal.new(ask.fetch(1))
-            new_size = old_size - match_size
-            ask[1] = new_size.to_s('F')
+          if ask.fetch(:order_id) == msg.fetch('maker_order_id')
+            ask[:size] = ask[:size] - msg.fetch('size')
           end
         end
         @bids.map do |bid|
-          if bid.include? msg.fetch("taker_order_id")
-            old_size = BigDecimal.net(bid.fetch(1))
-            new_size = old_size - match_size
-            bid[1] = new_size.to_s('F')
+          if bid.fetch(:order_id) == msg.fetch('taker_order_id')
+            bid[:size] = bid[:size] - msg.fetch('size')
           end
         end
-      when "buy"
+      when 'buy'
         @bids.map do |bid|
-          if bid.include? msg.fetch("maker_order_id")
-            old_size = BigDecimal.new(bid.fetch(1))
-            new_size = old_size - match_size
-            bid[1] = new_size.to_s('F')
+          if bid.fetch(:order_id) == msg.fetch('maker_order_id')
+            bid[:size] = bid[:size] - msg.fetch('size')
           end
         end
         @asks.map do |ask|
-          if ask.include? msg.fetch("taker_order_id")
-            old_size = BigDecimal.new(ask.fetch(1))
-            new_size = old_size - match_size
-            ask[1] = new_size.to_s('F')
+          if ask.fetch(:order_id) == msg.fetch('taker_order_id')
+            ask[:size] = ask[:size] - msg.fetch('size')
           end
         end
       end
     end
 
     def done(msg)
-      case msg.fetch("side")
-      when "sell"
-        @asks.reject! {|a| a.include? msg.fetch("order_id")}
-      when "buy"
-        @bids.reject! {|a| a.include? msg.fetch("order_id")}
+      case msg.fetch('side')
+      when 'sell'
+        @asks.reject! {|a| a.fetch(:order_id) == msg['order_id']}
+      when 'buy'
+        @bids.reject! {|b| b.fetch(:order_id) == msg['order_id']}
       end
     end
 
     def change(msg)
-      case msg.fetch("side")
-      when "sell"
+      case msg.fetch('side')
+      when 'sell'
         @asks.map do |a|
-          if a.include? msg.fetch("order_id")
-            a[1] = msg.fetch("new_size")
+          if a.fetch(:order_id) == msg.fetch('order_id')
+            a[:size] = msg.fetch('new_size')
           end
         end
-      when "buy"
+      when 'buy'
         @bids.map do |b|
-          if b.include? msg.fetch("order_id")
-            b[1] = msg.fetch("new_size")
+          if b.fetch(:order_id) == msg.fetch('order_id')
+            b[:size] = msg.fetch('new_size')
           end
         end
       end

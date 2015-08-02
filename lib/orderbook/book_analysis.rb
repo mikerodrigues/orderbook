@@ -8,40 +8,50 @@ class Orderbook
       @asks.count
     end
 
+    def count
+      { bid: bid_count, ask: ask_count }
+    end
+
     def bid_volume
-      @bids.map {|x| BigDecimal.new(x.fetch(1))}.inject(:+)
+      @bids.map {|x| x.fetch(:size)}.inject(:+)
     end
 
     def ask_volume
-      @asks.map {|x| BigDecimal.new(x.fetch(1))}.inject(:+)
+      @asks.map {|x| x.fetch(:size)}.inject(:+)
+    end
+
+    def volume
+      { bid: bid_volume, ask: ask_volume }
     end
 
     def average_bid
-      array = @bids.map do |price, amount, id|
-        BigDecimal.new price
-      end
-      avg_bid = array.inject(:+) / array.count
-      avg_bid
+      bids = @bids.map {|x| x.fetch(:price)}
+      bids.inject(:+) / bids.count
     end
 
     def average_ask
-      array = @asks.map do |price, amount, id|
-        BigDecimal.new price
-      end
-      avg_ask = array.inject(:+) / array.count
-      avg_ask
+      asks = @asks.map {|x| x.fetch(:price)}
+      asks.inject(:+) / asks.count
+    end
+
+    def average
+      { bid: average_bid, ask: average_ask }
     end
 
     def best_bid
-      BigDecimal.new @bids.sort_by {|x| BigDecimal.new(x.fetch(0))}.last.first
+      @bids.sort_by {|x| x.fetch(:price)}.last
     end
 
     def best_ask
-      BigDecimal.new @asks.sort_by {|x| BigDecimal.new(x.fetch(0))}.first.first
+      @asks.sort_by {|x| x.fetch(:price)}.first
+    end
+
+    def best
+      { bid: best_bid, ask: best_ask }
     end
 
     def spread
-      best_ask - best_bid
+      best_ask.fetch(:price) - best_bid.fetch(:price)
     end
 
     def summarize
