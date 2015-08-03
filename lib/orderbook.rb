@@ -3,6 +3,7 @@ require 'orderbook/book_methods'
 require 'orderbook/book_analysis'
 require 'orderbook/real_time_book'
 require 'orderbook/version'
+require 'eventmachine'
 
 # This class represents the current state of the CoinBase Exchange orderbook.
 #
