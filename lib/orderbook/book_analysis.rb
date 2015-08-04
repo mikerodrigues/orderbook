@@ -1,4 +1,7 @@
 class Orderbook
+  # Simple collection of commands to get info about the orderbook. Add our own
+  # methods for calculating whatever it is you feel like calculating.
+  #
   module BookAnalysis
     def bid_count
       @bids.count
@@ -13,11 +16,11 @@ class Orderbook
     end
 
     def bid_volume
-      @bids.map {|x| x.fetch(:size)}.inject(:+)
+      @bids.map { |x| x.fetch(:size) }.inject(:+)
     end
 
     def ask_volume
-      @asks.map {|x| x.fetch(:size)}.inject(:+)
+      @asks.map { |x| x.fetch(:size) }.inject(:+)
     end
 
     def volume
@@ -25,12 +28,12 @@ class Orderbook
     end
 
     def average_bid
-      bids = @bids.map {|x| x.fetch(:price)}
+      bids = @bids.map { |x| x.fetch(:price) }
       bids.inject(:+) / bids.count
     end
 
     def average_ask
-      asks = @asks.map {|x| x.fetch(:price)}
+      asks = @asks.map { |x| x.fetch(:price) }
       asks.inject(:+) / asks.count
     end
 
@@ -39,11 +42,11 @@ class Orderbook
     end
 
     def best_bid
-      @bids.sort_by {|x| x.fetch(:price)}.last
+      @bids.sort_by { |x| x.fetch(:price) }.last
     end
 
     def best_ask
-      @asks.sort_by {|x| x.fetch(:price)}.first
+      @asks.sort_by { |x| x.fetch(:price) }.first
     end
 
     def best
@@ -57,11 +60,6 @@ class Orderbook
     def summarize
       print "# of asks: #{ask_count}\n# of bids: #{bid_count}\nAsk volume: #{ask_volume.to_s('F')}\nBid volume: #{bid_volume.to_s('F')}\n"
       $stdout.flush
-#      puts "Avg. ask: #{average_ask}"
-#      puts "Avg. bid: #{average_bid}"
-#      puts "Best ask: #{best_bid}"
-#      puts "Best bid: #{best_ask}"
-#      puts "Spread: #{spread}"
     end
   end
 end

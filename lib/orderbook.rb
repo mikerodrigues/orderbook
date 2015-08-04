@@ -56,8 +56,8 @@ class Orderbook
   # If a +block+ is given it is passed each message as it is received.
   #
   def initialize(live = true, &block)
-    @bids = [{price: nil, size: nil, order_id: nil}]
-    @asks = [{price: nil, size: nil, order_id: nil}]
+    @bids = [{ price: nil, size: nil, order_id: nil }]
+    @asks = [{ price: nil, size: nil, order_id: nil }]
     @first_sequence = 0
     @last_sequence = 0
     @websocket = Coinbase::Exchange::Websocket.new(keepalive: true)
@@ -84,21 +84,15 @@ class Orderbook
   end
 
   def fetch_current_orderbook
+    order_to_hash = lambda do |price, size, order_id|
+      { price:    BigDecimal.new(price),
+        size:     BigDecimal.new(size),
+        order_id: order_id
+      }
+    end
     @client.orderbook(level: 3) do |resp|
-      @bids = resp['bids'].map do |price, size, order_id|
-        {
-          price: BigDecimal.new(price),
-          size: BigDecimal.new(size),
-          order_id: order_id
-        }
-      end
-      @asks = resp['asks'].map do |price, size, order_id|
-        {
-          price: BigDecimal.new(price),
-          size: BigDecimal.new(size),
-          order_id: order_id
-        }
-      end
+      @bids = resp['bids'].map(&order_to_hash)
+      @asks = resp['asks'].map(&order_to_hash)
       @first_sequence = resp['sequence']
     end
   end

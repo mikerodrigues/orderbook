@@ -27,7 +27,7 @@ task :console do
   PRY.start
 end
 
-task :default => ['build', 'install']
+task default: %w(build install)
 
 Rake::TestTask.new do |t|
   t.libs << 'test'

@@ -1,7 +1,4 @@
 class Orderbook
-  class RealTimeBook < Orderbook
-    # For backwards compatability
-
-  end
+  # For backwards compatability
+  class RealTimeBook < Orderbook; end
 end
-
