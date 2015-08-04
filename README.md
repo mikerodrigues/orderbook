@@ -1,4 +1,5 @@
 # Orderbook
+<a href="https://codeclimate.com/github/mikerodrigues/orderbook"><img src="https://codeclimate.com/github/mikerodrigues/orderbook/badges/gpa.svg" /></a>
 
 A gem for creating a realtime order book for the Coinbase Exchange.
 
