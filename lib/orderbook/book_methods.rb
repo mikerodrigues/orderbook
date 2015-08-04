@@ -4,21 +4,19 @@ class Orderbook
   # as they are received by the websocket.
   #
   module BookMethods
-    BIGDECIMAL_KEYS = ['size', 'old_size', 'new_size', 'remaining_size', 'price', 'funds', 'old_funds', 'new_funds']
+    BIGDECIMAL_KEYS = %w(size old_size new_size remaining_size price)
 
     # Applies a message to an Orderbook object by making relevant changes to
     # @bids, @asks, and @last_sequence.
     #
     def apply(msg)
-      unless msg.fetch('sequence') <= @first_sequence
-        @last_sequence = msg.fetch('sequence')
-        BIGDECIMAL_KEYS.each do |key|
-          if msg.fetch(key, false)
-            msg[key] = BigDecimal.new(msg.fetch(key))
-          end
-        end
-        __send__(msg.fetch('type'), msg)
+      return if msg.fetch('sequence') <= @first_sequence
+      @last_sequence = msg.fetch('sequence')
+      BIGDECIMAL_KEYS.each do |key|
+        msg[key] = BigDecimal.new(msg.fetch(key)) if msg.fetch(key, false)
       end
+
+      __send__(msg.fetch('type'), msg)
     end
 
     private
@@ -41,15 +39,15 @@ class Orderbook
         end
       end
 
-      @asks.map &decrement_match if msg.fetch('side') == 'sell'
-      @bids.map &decrement_match if msg.fetch('side') == 'buy'
+      @asks.map(&decrement_match) if msg.fetch('side') == 'sell'
+      @bids.map(&decrement_match) if msg.fetch('side') == 'buy'
     end
 
     def done(msg)
-      matching_order = lambda {|o| o.fetch(:order_id) == msg.fetch('order_id')}
+      matching_order = ->(o) { o.fetch(:order_id) == msg.fetch('order_id') }
 
-      @asks.reject! &matching_order if msg.fetch('side') == 'sell'
-      @bids.reject! &matching_order if msg.fetch('side') == 'buy'
+      @asks.reject!(&matching_order) if msg.fetch('side') == 'sell'
+      @bids.reject!(&matching_order) if msg.fetch('side') == 'buy'
     end
 
     def change(msg)
@@ -59,15 +57,11 @@ class Orderbook
         end
       end
 
-      case msg.fetch('side')
-      when 'sell'
-        @asks.map &change_order
-      when 'buy'
-        @bids.map &change_order
-      end
+      @asks.map(&change_order) if msg.fetch('side') == 'sell'
+      @bids.map(&change_order) if msg.fetch('side') == 'buy'
     end
 
-    def received(msg)
+    def received(_)
       # The book doesn't change for this message type.
     end
   end
