@@ -42,6 +42,10 @@ class Orderbook
   #
   attr_reader :thread
 
+  # Thread running the processing loop
+  #
+  attr_reader :process_thread
+
   # Last time a pong was received after a ping
   #
   attr_reader :last_pong
@@ -73,7 +77,7 @@ class Orderbook
   #
   def live!
     setup_websocket
-    start_thread
+    start_threads
   end
 
   private
@@ -114,17 +118,24 @@ class Orderbook
     end
   end
 
-  def start_thread
+  def start_threads
     @thread = Thread.new do
       EM.run do
         @websocket.start!
         ping
         handle_errors
         apply_orderbook_snapshot
+      end
+    end
+
+    @process_thread = Thread.new do
+      EM.run do
         loop do
-          @queue.pop do |message|
-            apply(message)
-            @callback.call(message) unless @callback.nil?
+          if @last_sequence == 0
+            @queue.pop do |message|
+              apply(message)
+              @callback.call(message) unless @callback.nil?
+            end
           end
         end
       end
