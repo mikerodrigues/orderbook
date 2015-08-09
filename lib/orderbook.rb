@@ -24,7 +24,7 @@ class Orderbook
 
   # Sequence number from the initial level 3 snapshot
   #
-  attr_reader :first_sequence
+  attr_reader :snapshot_sequence
 
   # Sequence number of most recently received message
   #
@@ -40,19 +40,23 @@ class Orderbook
 
   # Thread running the EM loop for the websocket
   #
-  attr_reader :websocket_thread
+  attr_reader :em_thread
+
+  # Thread running the processing loop
+  #
+  attr_reader :processing_thread
 
   # Thread running the EM loop for processing the queue
-  #
-  attr_reader :process_thread
-
-  # Last time a pong was received after a ping
   #
   attr_reader :last_pong
 
   # Callback to pass each received message to
   #
   attr_accessor :callback
+
+  # Message queue for incoming messages.
+  #
+  attr_reader :queue
 
   # Creates a new live copy of the orderbook.
   #
@@ -63,11 +67,11 @@ class Orderbook
   def initialize(live = true, &block)
     @bids = [{ price: nil, size: nil, order_id: nil }]
     @asks = [{ price: nil, size: nil, order_id: nil }]
-    @first_sequence = 0
+    @snapshot_sequence = 0
     @last_sequence = 0
-    @queue = EM::PriorityQueue.new {|x,y| x < y } 
+    @queue = Queue.new
     @websocket = Coinbase::Exchange::Websocket.new(keepalive: true)
-    @client = Coinbase::Exchange::AsyncClient.new
+    @client = Coinbase::Exchange::Client.new
     @callback = block if block_given?
     live && live!
   end
@@ -77,14 +81,36 @@ class Orderbook
   #
   def live!
     setup_websocket
-    start_threads
+    start_em_thread
+
+    # Wait to make sure the snapshot sequence ID is higher than the sequence of
+    # the first message in the queue.
+    #
+    sleep 0.3
+    apply_orderbook_snapshot
+    start_processing_thread
+  end
+
+  def kill
+    @processing_thread.kill
+    @em_thread.kill
+    @websocket.stop! 
+  end
+
+  def reset
+    @processing_thread.kill
+    @em_thread.kill
+    start_em_thread
+    sleep 0.3
+    apply_orderbook_snapshot
+    start_processing_thread
   end
 
   private
 
   def setup_websocket
     @websocket.message do |message|
-      @queue.push(message, message.fetch('sequence'))
+      @queue.push(message)
     end
   end
 
@@ -99,7 +125,7 @@ class Orderbook
     @client.orderbook(level: 3) do |resp|
       @bids = resp['bids'].map { |b| order_to_hash(*b) }
       @asks = resp['asks'].map { |a| order_to_hash(*a) }
-      @first_sequence = resp['sequence']
+      @snapshot_sequence = resp['sequence']
       @last_sequence = resp['sequence']
     end
   end
@@ -118,26 +144,22 @@ class Orderbook
     end
   end
 
-  def start_threads
-    @websocket_thread = Thread.new do
+  def start_em_thread
+    @em_thread = Thread.new do
       EM.run do
         @websocket.start!
         ping
         handle_errors
-        apply_orderbook_snapshot
       end
     end
+  end
 
-    @process_thread = Thread.new do
-      EM.run do
-        loop do
-          if @last_sequence == 0
-            @queue.pop do |message|
-              apply(message)
-              @callback.call(message) unless @callback.nil?
-            end
-          end
-        end
+  def start_processing_thread
+    @processing_thread = Thread.new do
+      loop do
+        message = @queue.shift
+        apply(message)
+        @callback.call(message) unless @callback.nil?
       end
     end
   end

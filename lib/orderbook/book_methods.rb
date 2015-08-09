@@ -10,11 +10,11 @@ class Orderbook
     # @bids, @asks, and @last_sequence.
     #
     def apply(msg)
-      #return if msg.fetch('sequence') != @last_sequence + 1
-      if msg.fetch('sequence') != @last_sequence + 1
-        puts "Expected #{@last_sequence + 1}, got #{msg.fetch('sequence')}"
-        return
-      end
+      return if msg.fetch('sequence') != @last_sequence + 1
+      #if msg.fetch('sequence') != @last_sequence + 1
+      #  puts "Expected #{@last_sequence + 1}, got #{msg.fetch('sequence')}"
+      #  @websocket.stop!
+      #end
       @last_sequence = msg.fetch('sequence')
       BIGDECIMAL_KEYS.each do |key|
         msg[key] = BigDecimal.new(msg.fetch(key)) if msg.fetch(key, false)
