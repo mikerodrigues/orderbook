@@ -11,7 +11,7 @@ GIT
 PATH
   remote: .
   specs:
-    orderbook (2.0.1)
+    orderbook (2.0.2)
 
 GEM
   remote: https://rubygems.org/
@@ -25,6 +25,9 @@ GEM
       em-socksify (>= 0.3)
       eventmachine (>= 1.0.3)
       http_parser.rb (>= 0.6.0)
+    em-priority-queue (1.1.2)
+      eventmachine (>= 1.0.0.beta.3)
+      stakach-algorithms
     em-socksify (0.3.0)
       eventmachine (>= 1.0.0.beta.4)
     eventmachine (1.0.7)
@@ -34,6 +37,7 @@ GEM
     http_parser.rb (0.6.0)
     json (1.8.3)
     rake (10.4.2)
+    stakach-algorithms (1.0.8)
     websocket-driver (0.6.2)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.2)
@@ -44,6 +48,7 @@ PLATFORMS
 DEPENDENCIES
   bundler (~> 1.7)
   coinbase-exchange!
+  em-priority-queue
   json
   orderbook!
   rake (~> 10.0)

@@ -4,6 +4,7 @@ require 'orderbook/book_analysis'
 require 'orderbook/real_time_book'
 require 'orderbook/version'
 require 'eventmachine'
+require 'em-priority-queue'
 
 # This class represents the current state of the CoinBase Exchange orderbook.
 #
@@ -60,6 +61,7 @@ class Orderbook
     @asks = [{ price: nil, size: nil, order_id: nil }]
     @first_sequence = 0
     @last_sequence = 0
+    @queue = EM::PriorityQueue.new {|x,y| x < y } 
     @websocket = Coinbase::Exchange::Websocket.new(keepalive: true)
     @client = Coinbase::Exchange::AsyncClient.new
     @callback = block if block_given?
@@ -78,22 +80,23 @@ class Orderbook
 
   def setup_websocket
     @websocket.message do |message|
-      apply(message)
-      @callback && @callback.call(message)
+      @queue.push(message, message.fetch('sequence'))
     end
   end
 
-  def fetch_current_orderbook
-    order_to_hash = lambda do |price, size, order_id|
-      { price:    BigDecimal.new(price),
-        size:     BigDecimal.new(size),
-        order_id: order_id
-      }
-    end
+  def order_to_hash(price, size, order_id)
+    { price:    BigDecimal.new(price),
+      size:     BigDecimal.new(size),
+      order_id: order_id
+    }
+  end
+
+  def apply_orderbook_snapshot
     @client.orderbook(level: 3) do |resp|
-      @bids = resp['bids'].map(&order_to_hash)
-      @asks = resp['asks'].map(&order_to_hash)
+      @bids = resp['bids'].map { |b| order_to_hash(*b) }
+      @asks = resp['asks'].map { |a| order_to_hash(*a) }
       @first_sequence = resp['sequence']
+      @last_sequence = resp['sequence']
     end
   end
 
@@ -114,10 +117,16 @@ class Orderbook
   def start_thread
     @thread = Thread.new do
       EM.run do
-        fetch_current_orderbook
         @websocket.start!
         ping
         handle_errors
+        apply_orderbook_snapshot
+        loop do
+          @queue.pop do |message|
+            apply(message)
+            @callback.call(message) unless @callback.nil?
+          end
+        end
       end
     end
   end
