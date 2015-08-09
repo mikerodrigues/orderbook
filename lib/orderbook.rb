@@ -38,11 +38,11 @@ class Orderbook
   #
   attr_reader :client
 
-  # Thread running the EM loop
+  # Thread running the EM loop for the websocket
   #
-  attr_reader :thread
+  attr_reader :websocket_thread
 
-  # Thread running the processing loop
+  # Thread running the EM loop for processing the queue
   #
   attr_reader :process_thread
 
@@ -119,7 +119,7 @@ class Orderbook
   end
 
   def start_threads
-    @thread = Thread.new do
+    @websocket_thread = Thread.new do
       EM.run do
         @websocket.start!
         ping
