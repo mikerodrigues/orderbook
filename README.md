@@ -64,11 +64,6 @@ ob.on_message do |message|
 end
 ```
 
-* The old class name is still supported and is equivalent to an Orderbook:
-```ruby
-rtb = Orderbook::RealTimeBook.new
-```
-
 * List current bids:
 ```ruby
 ob.bids
