@@ -44,7 +44,7 @@ ob = Orderbook.new(false)
 
 # When you want it to go live:
 
-ob.live!
+ob.start!
 ```
 
 * Create a live Orderbook with a callback to fire on each message:

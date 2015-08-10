@@ -96,12 +96,8 @@ class Orderbook
   end
 
   def reset!
-    @processing_thread.kill
-    @em_thread.kill
-    start_em_thread
-    sleep 0.3
-    apply_orderbook_snapshot
-    start_processing_thread
+    stop!
+    start!
   end
 
   private
