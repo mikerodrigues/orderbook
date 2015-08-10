@@ -124,7 +124,7 @@ class Orderbook
     end
   end
 
-  def ping
+  def setup_ping_timer
     EM.add_periodic_timer(PING_INTERVAL) do
       @websocket.ping do
         @last_pong = Time.now
@@ -132,7 +132,7 @@ class Orderbook
     end
   end
 
-  def handle_errors
+  def setup_error_handler
     EM.error_handler do |e|
       print "Websocket Error: #{e.message} - #{e.backtrace.join("\n")}"
     end
@@ -143,8 +143,8 @@ class Orderbook
       setup_websocket_callback
       EM.run do
         @websocket.start!
-        ping
-        handle_errors
+        setup_ping_timer
+        setup_error_handler
       end
     end
   end
