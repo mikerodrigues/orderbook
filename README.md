@@ -54,10 +54,10 @@ ob = Orderbook.new do |message|
 end
 ```
 
-* Create or reset the callback:
+* Create or reset the message callback:
 ```ruby
-ob.callback = lambda do |message|
-  puts message.fetch 'callback'
+ob.on_message do |message|
+  puts message.fetch 'sequence'
 end
 ```
 
@@ -78,7 +78,7 @@ ob.asks
 
 * Show sequence number for initial level 3 snapshot:
 ```ruby
-ob.first_sequence
+ob.snapshot_sequence
 ```
 
 * Show sequence number for the last message received

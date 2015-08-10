@@ -35,7 +35,7 @@ class Orderbook
   #
   attr_reader :websocket
 
-  # Coinbase::Exchange::AsyncClient object
+  # Coinbase::Exchange::Client object
   #
   attr_reader :client
 
@@ -47,13 +47,9 @@ class Orderbook
   #
   attr_reader :processing_thread
 
-  # Thread running the EM loop for processing the queue
+  # DateTime of last successful pong
   #
   attr_reader :last_pong
-
-  # Callback to pass each received message to
-  #
-  attr_accessor :callback
 
   # Message queue for incoming messages.
   #
@@ -73,7 +69,7 @@ class Orderbook
     @queue = Queue.new
     @websocket = Coinbase::Exchange::Websocket.new(keepalive: true)
     @client = Coinbase::Exchange::Client.new
-    @callback = block if block_given?
+    @on_message = block if block_given?
     start && start!
   end
 
@@ -107,8 +103,14 @@ class Orderbook
     start!
   end
 
+  def on_message(&block)
+    @on_message = block
+  end
+
   private
 
+  # Converts an order array from the API into a hash.
+  #
   def order_to_hash(price, size, order_id)
     { price:    BigDecimal.new(price),
       size:     BigDecimal.new(size),
@@ -116,7 +118,7 @@ class Orderbook
     }
   end
 
-  # Converts an order array from the API into a hash.
+  # Fetch orderbook snapshot from API and convert order arrays to hashes.
   #
   def apply_orderbook_snapshot
     @client.orderbook(level: 3) do |resp|
@@ -163,7 +165,7 @@ class Orderbook
       loop do
         message = @queue.shift
         apply(message)
-        @callback.call(message) unless @callback.nil?
+        @on_message.call(message) unless @on_message.nil?
       end
     end
   end
