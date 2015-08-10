@@ -4,4 +4,4 @@ source 'https://rubygems.org'
 gemspec
 gem 'coinbase-exchange', git: 'https://github.com/mikerodrigues/coinbase-exchange-ruby.git', branch: 'orderbook'
 gem 'json'
-gem 'em-priority-queue'
+gem 'eventmachine'
