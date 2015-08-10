@@ -4,7 +4,6 @@ require 'orderbook/book_analysis'
 require 'orderbook/real_time_book'
 require 'orderbook/version'
 require 'eventmachine'
-require 'em-priority-queue'
 
 # This class represents the current state of the CoinBase Exchange orderbook.
 #
@@ -60,27 +59,26 @@ class Orderbook
 
   # Creates a new live copy of the orderbook.
   #
-  # If +live+ is set to false, the orderbook will not start automatically.
+  # If +start+ is set to false, the orderbook will not start automatically.
   #
   # If a +block+ is given it is passed each message as it is received.
   #
-  def initialize(live = true, &block)
-    @bids = [{ price: nil, size: nil, order_id: nil }]
-    @asks = [{ price: nil, size: nil, order_id: nil }]
+  def initialize(start = true, &block)
+    @bids = []
+    @asks = []
     @snapshot_sequence = 0
     @last_sequence = 0
     @queue = Queue.new
     @websocket = Coinbase::Exchange::Websocket.new(keepalive: true)
     @client = Coinbase::Exchange::Client.new
     @callback = block if block_given?
-    live && live!
+    start && start!
   end
 
   # Used to start the thread that listens to updates on the websocket and
   # applies them to the current orderbook to create a live book.
   #
-  def live!
-    setup_websocket
+  def start!
     start_em_thread
 
     # Wait to make sure the snapshot sequence ID is higher than the sequence of
@@ -91,13 +89,13 @@ class Orderbook
     start_processing_thread
   end
 
-  def kill
+  def stop!
     @processing_thread.kill
     @em_thread.kill
-    @websocket.stop! 
+    @websocket.stop!
   end
 
-  def reset
+  def reset!
     @processing_thread.kill
     @em_thread.kill
     start_em_thread
@@ -107,12 +105,6 @@ class Orderbook
   end
 
   private
-
-  def setup_websocket
-    @websocket.message do |message|
-      @queue.push(message)
-    end
-  end
 
   def order_to_hash(price, size, order_id)
     { price:    BigDecimal.new(price),
@@ -127,6 +119,12 @@ class Orderbook
       @asks = resp['asks'].map { |a| order_to_hash(*a) }
       @snapshot_sequence = resp['sequence']
       @last_sequence = resp['sequence']
+    end
+  end
+
+  def setup_websocket_callback
+    @websocket.message do |message|
+      @queue.push(message)
     end
   end
 
@@ -146,6 +144,7 @@ class Orderbook
 
   def start_em_thread
     @em_thread = Thread.new do
+      setup_websocket_callback
       EM.run do
         @websocket.start!
         ping
