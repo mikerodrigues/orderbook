@@ -11,7 +11,9 @@ class Orderbook
   include BookMethods
   include BookAnalysis
 
-  PING_INTERVAL = 15 # seconds in between pinging the connection.
+  # seconds in between pinging the connection.
+  #
+  PING_INTERVAL = 15
 
   # Array of bids
   #
@@ -89,12 +91,17 @@ class Orderbook
     start_processing_thread
   end
 
+  # Stops the processing thread, EM thread, and the websocket.
+  #
   def stop!
     @processing_thread.kill
     @em_thread.kill
     @websocket.stop!
   end
 
+  # Start and stop the Orderbook. Used to reset Orderbook state with a fresh
+  # snapshot.
+  #
   def reset!
     stop!
     start!
@@ -109,6 +116,8 @@ class Orderbook
     }
   end
 
+  # Converts an order array from the API into a hash.
+  #
   def apply_orderbook_snapshot
     @client.orderbook(level: 3) do |resp|
       @bids = resp['bids'].map { |b| order_to_hash(*b) }
