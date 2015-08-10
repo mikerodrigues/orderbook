@@ -1,5 +1,5 @@
 # Orderbook version number. I try to keep it semantic.
 #
 class Orderbook
-  VERSION = '2.0.2'
+  VERSION = '3.0.0'
 end
