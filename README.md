@@ -1,5 +1,8 @@
-# Orderbook
+# Orderbook 3.0.0
 <a href="https://codeclimate.com/github/mikerodrigues/orderbook"><img src="https://codeclimate.com/github/mikerodrigues/orderbook/badges/gpa.svg" /></a>
+
+Version 3.0.0 has a slightly different interface and properly queues messages
+for an accurate Orderbook.
 
 A gem for creating a realtime order book for the Coinbase Exchange.
 
