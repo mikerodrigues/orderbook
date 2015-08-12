@@ -23,6 +23,10 @@ class Orderbook
   #
   attr_reader :asks
 
+  # Product ID of the orderbook
+  #
+  attr_reader :product_id
+
   # Sequence number from the initial level 3 snapshot
   #
   attr_reader :snapshot_sequence
@@ -61,14 +65,15 @@ class Orderbook
   #
   # If a +block+ is given it is passed each message as it is received.
   #
-  def initialize(start = true, &block)
+  def initialize(product_id: "BTC-USD", start: true, &block)
+    @product_id = product_id
     @bids = []
     @asks = []
     @snapshot_sequence = 0
     @last_sequence = 0
     @queue = Queue.new
-    @websocket = Coinbase::Exchange::Websocket.new(keepalive: true)
-    @client = Coinbase::Exchange::Client.new
+    @websocket = Coinbase::Exchange::Websocket.new(keepalive: true, product_id: @product_id)
+    @client = Coinbase::Exchange::Client.new({ product_id: @product_id })
     @on_message = block if block_given?
     start && start!
   end

@@ -43,11 +43,16 @@ ob = Orderbook.new
 * Create an Orderbook object but don't fetch an orderbook or start live
   updating.
 ```ruby
-ob = Orderbook.new(false)
+ob = Orderbook.new(start: false)
 
 # When you want it to go live:
 
 ob.start!
+```
+
+* Get the "BTC-GBP" orderbook instead of "BTC-USD":
+```ruby
+ob = Orderbook.new(product_id: "BTC-GBP")
 ```
 
 * Create a live Orderbook with a callback to fire on each message:
