@@ -50,6 +50,14 @@ ob = Orderbook.new(start: false)
 # When you want it to go live:
 
 ob.start!
+
+# When you want to stop it:
+
+ob.stop!
+
+# Reset the orderbook if something goes wrong:
+
+ob.reset!
 ```
 
 * Get the "BTC-GBP" orderbook instead of "BTC-USD":
