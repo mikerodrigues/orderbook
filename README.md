@@ -55,7 +55,8 @@ ob.start!
 
 ob.stop!
 
-# Reset the orderbook if something goes wrong:
+# Reset the orderbook by fetching a fresh orderbook snapshot. This just calls
+# `stop!` and then `start!` again:
 
 ob.reset!
 ```
