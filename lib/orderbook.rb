@@ -73,7 +73,7 @@ class Orderbook
     @last_sequence = 0
     @queue = Queue.new
     @websocket = Coinbase::Exchange::Websocket.new(keepalive: true, product_id: @product_id)
-    @client = Coinbase::Exchange::Client.new({ product_id: @product_id })
+    @client = Coinbase::Exchange::Client.new('', '', '', product_id: @product_id)
     @on_message = block if block_given?
     start && start!
   end
