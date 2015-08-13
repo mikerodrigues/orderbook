@@ -1,10 +1,12 @@
-# Orderbook 3.0.0
+# Orderbook
 <a href="https://codeclimate.com/github/mikerodrigues/orderbook"><img src="https://codeclimate.com/github/mikerodrigues/orderbook/badges/gpa.svg" /></a>
+
+A gem for creating a realtime order book for the Coinbase Exchange.
+
+Version 4.0.0 switches to keyword arguments, supports other currencies.
 
 Version 3.0.0 has a slightly different interface and properly queues messages
 for an accurate Orderbook.
-
-A gem for creating a realtime order book for the Coinbase Exchange.
 
 Version 1.0.0 and greater now use the official Coinbase Exchange Ruby Gem's
 EventMachine-driven client. It should be more reliable than the previous socket
@@ -58,14 +60,16 @@ ob = Orderbook.new(product_id: "BTC-GBP")
 * Create a live Orderbook with a callback to fire on each message:
 ```ruby
 ob = Orderbook.new do |message|
-  puts message.fetch 'type'
+  if message.fetch 'type' == 'match'
+    puts ob.spread.to_f('s')
+  end
 end
 ```
 
 * Create or reset the message callback:
 ```ruby
 ob.on_message do |message|
-  puts message.fetch 'sequence'
+  puts ob.count
 end
 ```
 
