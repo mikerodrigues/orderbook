@@ -16,3 +16,4 @@ mkmf.log
 *config.rb
 *.gem
 bin
+Gemfile.lock
