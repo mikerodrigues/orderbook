@@ -5,3 +5,4 @@ gemspec
 gem 'coinbase-exchange'
 gem 'json'
 gem 'eventmachine'
+gem 'addressable', '>= 2.9.0'
