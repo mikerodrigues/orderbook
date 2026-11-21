@@ -1,65 +1,59 @@
-class Orderbook
-  # Simple collection of commands to get info about the orderbook. Add our own
-  # methods for calculating whatever it is you feel like calculating.
-  #
-  module BookAnalysis
-    def bid_count
-      @bids.count
-    end
+# frozen_string_literal: true
 
-    def ask_count
-      @asks.count
-    end
+class Orderbook
+  module BookAnalysis
+    def bid_count = bids.count
+    def ask_count = asks.count
 
     def count
       { bid: bid_count, ask: ask_count }
     end
 
-    def bid_volume
-      @bids.map { |x| x.fetch(:size) }.inject(:+)
-    end
-
-    def ask_volume
-      @asks.map { |x| x.fetch(:size) }.inject(:+)
-    end
+    def bid_volume = sum_sizes(bids)
+    def ask_volume = sum_sizes(asks)
 
     def volume
       { bid: bid_volume, ask: ask_volume }
     end
 
-    def average_bid
-      bids = @bids.map { |x| x.fetch(:price) }
-      bids.inject(:+) / bids.count
-    end
-
-    def average_ask
-      asks = @asks.map { |x| x.fetch(:price) }
-      asks.inject(:+) / asks.count
-    end
+    def average_bid = average_price(bids)
+    def average_ask = average_price(asks)
 
     def average
       { bid: average_bid, ask: average_ask }
     end
 
-    def best_bid
-      @bids.sort_by { |x| x.fetch(:price) }.last
-    end
-
-    def best_ask
-      @asks.sort_by { |x| x.fetch(:price) }.first
-    end
+    def best_bid = bids.first
+    def best_ask = asks.first
 
     def best
       { bid: best_bid, ask: best_ask }
     end
 
     def spread
+      return unless best_bid && best_ask
+
       best_ask.fetch(:price) - best_bid.fetch(:price)
     end
 
-    def summarize
-      print "# of asks: #{ask_count}\n# of bids: #{bid_count}\nAsk volume: #{ask_volume.to_s('F')}\nBid volume: #{bid_volume.to_s('F')}\n"
-      $stdout.flush
+    def summarize(io: $stdout)
+      io.puts "# of asks: #{ask_count}"
+      io.puts "# of bids: #{bid_count}"
+      io.puts "Ask volume: #{ask_volume.to_s('F')}"
+      io.puts "Bid volume: #{bid_volume.to_s('F')}"
+      io.flush
+    end
+
+    private
+
+    def sum_sizes(levels)
+      levels.sum(BigDecimal('0')) { |level| level.fetch(:size) }
+    end
+
+    def average_price(levels)
+      return if levels.empty?
+
+      levels.sum(BigDecimal('0')) { |level| level.fetch(:price) } / levels.count
     end
   end
 end

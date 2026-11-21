@@ -1,117 +1,118 @@
 # Orderbook
-<a href="https://codeclimate.com/github/mikerodrigues/orderbook"><img src="https://codeclimate.com/github/mikerodrigues/orderbook/badges/gpa.svg" /></a>
 
-A gem for creating a realtime order book for the Coinbase Exchange.
+A Ruby 4 client that maintains a real-time Level 2 order book from Coinbase
+Advanced Trade's public WebSocket feed.
 
-Version 4.0.0 switches to keyword arguments, supports other currencies.
+Version 5 migrates from the discontinued Coinbase Pro/Exchange `full` feed to
+the current Advanced Trade `level2` feed:
 
-Version 3.0.0 has a slightly different interface and properly queues messages
-for an accurate Orderbook.
+- WebSocket: `wss://advanced-trade-ws.coinbase.com`
+- Subscription channel: `level2`
+- Keepalive channel: `heartbeats`
+- Authentication: none for public market data
 
-Version 1.0.0 and greater now use the official Coinbase Exchange Ruby Gem's
-EventMachine-driven client. It should be more reliable than the previous socket
-code.
+See Coinbase's official [Advanced Trade WebSocket
+overview](https://docs.cdp.coinbase.com/coinbase-app/advanced-trade-apis/websocket/websocket-overview)
+and [`level2` channel
+reference](https://docs.cdp.coinbase.com/api-reference/advanced-trade-api/websocket/level2).
 
-Also, the gem now uses BigDecimal in place of Float when dealing with sizes and
-prices.
+Coinbase now publishes aggregated price levels rather than individual orders on
+this feed. Each entry in `bids` and `asks` therefore has `:price` and `:size`,
+but no `:order_id`. Prices and sizes are `BigDecimal` values.
+
+The client waits for Coinbase's WebSocket snapshot before returning from
+`Orderbook.new`, applies absolute quantity updates, detects sequence gaps and
+stale connections, and reconnects with a fresh snapshot when necessary.
+
+## Requirements
+
+- Ruby 4.x (tested with Ruby 4.0.10)
 
 ## Installation
 
-Add this line to your application's Gemfile:
+Add the gem to your Gemfile:
 
 ```ruby
 gem 'orderbook'
 ```
 
-And then execute:
+Then run:
 
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install orderbook
+```sh
+bundle install
+```
 
 ## Usage
 
 ```ruby
 require 'orderbook'
+
+book = Orderbook.new(product_id: 'BTC-USD')
+
+book.best_bid
+# => { price: #<BigDecimal ...>, size: #<BigDecimal ...> }
+
+book.best_ask
+book.spread
+book.count
+book.volume
+book.snapshot_sequence
+book.last_sequence
+book.last_pong
+
+book.stop!
 ```
 
-* Create a live updating Orderbook:
+Use a block to receive each decoded Coinbase message after the internal book
+has been updated:
+
 ```ruby
-ob = Orderbook.new
-```
+book = Orderbook.new do |message|
+  next unless message['channel'] == 'l2_data'
 
-* Create an Orderbook object but don't fetch an orderbook or start live
-  updating.
-```ruby
-ob = Orderbook.new(start: false)
-
-# When you want it to go live:
-
-ob.start!
-
-# When you want to stop it:
-
-ob.stop!
-
-# Reset the orderbook by fetching a fresh orderbook snapshot. This just calls
-# `stop!` and then `start!` again:
-
-ob.reset!
-```
-
-* Get the "BTC-GBP" orderbook instead of "BTC-USD":
-```ruby
-ob = Orderbook.new(product_id: "BTC-GBP")
-```
-
-* Create a live Orderbook with a callback to fire on each message:
-```ruby
-ob = Orderbook.new do |message|
-  if message.fetch 'type' == 'match'
-    puts ob.spread.to_f('s')
-  end
+  puts "bid=#{book.best_bid.inspect} ask=#{book.best_ask.inspect}"
 end
 ```
 
-* Create or reset the message callback:
+Create the object without connecting, then start it later:
+
 ```ruby
-ob.on_message do |message|
-  puts ob.count
-end
+book = Orderbook.new(start: false)
+book.start!
+book.ready? # => true after the initial snapshot
+book.reset! # reconnect and obtain a new snapshot
+book.stop!
 ```
 
-* List current bids:
+Automatic reconnects are enabled by default. Disable them when a supervisor
+owns reconnection:
+
 ```ruby
-ob.bids
+book = Orderbook.new(reconnect: false)
 ```
 
-* List current asks:
-```ruby
-ob.asks
+## Version 4 migration notes
+
+- This is a Level 2 price book; `:order_id` is no longer available.
+- Coinbase's WebSocket snapshot replaces the old REST Level 3 snapshot, so the
+  `client` and `rest_url` accessors were removed.
+- Legacy Exchange API key, secret, and passphrase arguments were removed. The
+  public Advanced Trade channels do not require credentials.
+- `snapshot_sequence` and `last_sequence` now refer to Advanced Trade
+  `sequence_num` values.
+- `last_pong` is the timestamp from the latest Coinbase heartbeat.
+
+## Security
+
+Only `wss://` endpoints are accepted. TLS chain and hostname verification are
+both enforced. Incoming messages and the processing queue are bounded, numeric
+fields are parsed without floating-point conversion, and unexpected protocol
+messages cannot invoke Ruby methods dynamically.
+
+## Development
+
+```sh
+bundle install
+bundle exec rake test
+bundle exec rake build
 ```
-
-* Show sequence number for initial level 3 snapshot:
-```ruby
-ob.snapshot_sequence
-```
-
-* Show sequence number for the last message received
-```ruby
-ob.last_sequence
-```
-
-* Show the last Time a pong was received after a ping (ensures the connection is
-  still alive):
-```ruby
-ob.last_pong
-```
-
-## Contributing
-
-1. Fork it ( https://github.com/mikerodrigues/orderbook/fork )
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create a new Pull Request
